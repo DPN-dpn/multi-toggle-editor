@@ -1,4 +1,4 @@
-from . import operators, panel
+from . import panel, operators
 
 
 def register():
