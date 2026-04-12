@@ -10,13 +10,12 @@ bl_info = {
 }
 
 # 라이브러리 임포트
-from .source import path, updator, editor, core
+from .source import editor, updator, core
 
 
 # 애드온 등록 함수
 def register():
     core.register()
-    path.register()
     editor.register()
     updator.register()
 
@@ -25,7 +24,6 @@ def register():
 def unregister():
     updator.unregister()
     editor.unregister()
-    path.unregister()
     core.unregister()
 
 

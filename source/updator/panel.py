@@ -10,14 +10,15 @@ class PT_Updater(Panel):
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
     bl_category = "멀티 토글"
+    bl_options = {"DEFAULT_CLOSED"}
 
     def draw(self, context):
         layout = self.layout
         scene = context.scene
-        latest_version = scene.get("latest_version", "")
-        current_version = scene.get("current_version", "")
-        update_available = scene.get("update_available", False)
-        show_restart = scene.get("show_restart", False)
+        latest_version = scene.get("mte.latest_version", "")
+        current_version = scene.get("mte.current_version", "")
+        update_available = scene.get("mte.update_available", False)
+        show_restart = scene.get("mte.show_restart", False)
 
         # 버튼 라벨 조건 분기
         if not latest_version:
@@ -28,7 +29,7 @@ class PT_Updater(Panel):
             update_label = f"업데이트: {current_version} → {latest_version}"
 
         layout.operator(
-            "updater.check_update", text="업데이트 체크", icon="FILE_REFRESH"
+            "mte.check_update", text="업데이트 체크", icon="FILE_REFRESH"
         )
         row = layout.row()
         if show_restart:
@@ -37,8 +38,8 @@ class PT_Updater(Panel):
             )
         else:
             row.enabled = bool(update_available)
-            row.operator("updater.do_update", text=update_label, icon="IMPORT")
-        layout.operator("updater.open_github", text="GitHub", icon="URL")
+            row.operator("mte.do_update", text=update_label, icon="IMPORT")
+        layout.operator("mte.open_github", text="GitHub", icon="URL")
 
 
 def register():
