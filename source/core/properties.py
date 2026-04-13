@@ -7,6 +7,9 @@ from bpy.props import (
     EnumProperty,
 )
 from bpy.types import PropertyGroup
+from ..utils.validator import validate_key_name
+
+_name_update_lock = False
 
 TYPE_ITEMS = [
     ("CYCLE", "Cycle", "값을 순환합니다"),
@@ -15,8 +18,65 @@ TYPE_ITEMS = [
 ]
 
 
+def _show_name_error(context, title, message):
+    if not context or not hasattr(context, "window_manager"):
+        return
+
+    def _draw(self, ctx):
+        self.layout.label(text=message)
+
+    context.window_manager.popup_menu(_draw, title=title, icon="ERROR")
+
+
+def _on_name_update(self, context):
+    global _name_update_lock
+    if _name_update_lock:
+        return
+
+    new = getattr(self, "name", "") or ""
+    # 문법 검사
+    if not validate_key_name(new):
+        prev = getattr(self, "_last_valid_name", "")
+        _name_update_lock = True
+        try:
+            self.name = prev
+        finally:
+            _name_update_lock = False
+        _show_name_error(
+            context, "이름 검사 실패", "이름이 유효하지 않습니다."
+        )
+        return
+
+    # 중복 검사 (같은 Scene.mte_keys 내 다른 항목과 이름이 겹치면 거부)
+    scene = context.scene if context else getattr(self, "id_data", None)
+    if scene:
+        try:
+            my_ptr = self.as_pointer()
+        except Exception:
+            my_ptr = id(self)
+        for item in scene.mte_keys:
+            try:
+                item_ptr = item.as_pointer()
+            except Exception:
+                item_ptr = id(item)
+            if item_ptr != my_ptr and getattr(item, "name", "") == new:
+                prev = getattr(self, "_last_valid_name", "")
+                _name_update_lock = True
+                try:
+                    self.name = prev
+                finally:
+                    _name_update_lock = False
+                _show_name_error(
+                    context, "이름 중복", "다른 키 항목과 이름이 겹칩니다."
+                )
+                return
+
+    # 유효하면 기록
+    self._last_valid_name = new
+
+
 class MTEKeyItem(PropertyGroup):
-    name: StringProperty(name="이름", default="")
+    name: StringProperty(name="이름", default="", update=_on_name_update)
     poskey: StringProperty(name="긍정 키", default="")
     negkey: StringProperty(name="부정 키", default="")
     type: EnumProperty(name="타입", items=TYPE_ITEMS, default="CYCLE")

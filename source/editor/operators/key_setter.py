@@ -215,6 +215,7 @@ class MTE_OT_add_key(Operator):
         # 키 추가
         item = scene.mte_keys.add()
         item.name = name
+        item._last_valid_name = item.name
         item.key = ""
         scene.mte_keys_index = len(scene.mte_keys) - 1
         return {"FINISHED"}
