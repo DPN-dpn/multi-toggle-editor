@@ -82,14 +82,14 @@ class PT_EDITOR(Panel):
                 key_row_edit_pos_key = key_col_edit.row(align=True)
                 key_row_edit_pos_key.prop(item, "poskey", text="긍정 키")
                 key_row_edit_pos_key.operator(
-                    "mte.key_positive_capture", text="", icon="RESTRICT_RENDER_OFF"
+                    "mte.positive_key_capture", text="", icon="RESTRICT_RENDER_OFF"
                 ).target = "poskey"
 
                 # 부정 키
                 key_row_edit_neg_key = key_col_edit.row(align=True)
                 key_row_edit_neg_key.prop(item, "negkey", text="부정 키")
                 key_row_edit_neg_key.operator(
-                    "mte.key_negative_capture", text="", icon="RESTRICT_RENDER_OFF"
+                    "mte.negative_key_capture", text="", icon="RESTRICT_RENDER_OFF"
                 ).target = "negkey"
 
                 # 타입
