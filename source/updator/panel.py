@@ -7,6 +7,7 @@ class MULTI_TOGGLE_PT_updater(Panel):
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
     bl_category = "멀티 토글"
+    bl_order = 3
     bl_options = {"DEFAULT_CLOSED"}
 
     def draw(self, context):

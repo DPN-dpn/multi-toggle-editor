@@ -22,7 +22,46 @@ class MULTI_TOGGLE_OT_remove_global(Operator):
     index: IntProperty()
     
     def execute(self, context):
-        context.scene.multi_toggle_globals.remove(self.index)
+        scene = context.scene
+        scene.multi_toggle_globals.remove(self.index)
+        
+        # 연쇄 삭제 로직
+        deleted_idx_str = str(self.index)
+        for obj in scene.objects:
+            if obj.type == 'MESH':
+                rules = obj.multi_toggle_rules.conditions
+                
+                # 역순 순회하며 삭제를 위한 인덱스 수집, 및 살아남은 조건 인덱스 보정
+                to_delete = []
+                for i in range(len(rules)):
+                    cond = rules[i]
+                    if cond.type == 'CONDITION':
+                        if cond.saved_toggle_index == self.index:
+                            to_delete.append(i)
+                        else:
+                            if cond.saved_toggle_index > self.index:
+                                cond.saved_toggle_index -= 1
+                
+                if to_delete:
+                    for i in sorted(to_delete, reverse=True):
+                        rules.remove(i)
+                        
+                    # 빈 괄호 자동 정리
+                    while True:
+                        found_empty = False
+                        for i in range(len(rules)-1):
+                            if rules[i].type == 'PAREN_OPEN' and rules[i+1].type == 'PAREN_CLOSE':
+                                rules.remove(i+1)
+                                rules.remove(i)
+                                found_empty = True
+                                break
+                        if not found_empty:
+                            break
+                            
+                    if len(rules) == 0:
+                        obj.hide_viewport = False
+                        obj.hide_set(False)
+                        
         update_visibility(None, context)
         return {'FINISHED'}
 
@@ -33,6 +72,13 @@ class MULTI_TOGGLE_OT_clear_globals(Operator):
     
     def execute(self, context):
         context.scene.multi_toggle_globals.clear()
+        
+        for obj in context.scene.objects:
+            if obj.type == 'MESH':
+                obj.multi_toggle_rules.conditions.clear()
+                obj.hide_viewport = False
+                obj.hide_set(False)
+                
         update_visibility(None, context)
         return {'FINISHED'}
 

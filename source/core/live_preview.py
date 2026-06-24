@@ -37,7 +37,7 @@ def compile_rules(rules, globals_list):
             
         if cond.type == 'CONDITION':
             try:
-                idx = int(cond.toggle_enum)
+                idx = cond.saved_toggle_index
                 name = globals_list[idx].name
             except:
                 name = "Unknown"
@@ -83,6 +83,12 @@ def update_visibility(self=None, context=None):
         context = bpy.context
         
     scene = context.scene
+    
+    # 뷰포트에서 사라지기 전에 현재 활성 메쉬를 고정 타겟으로 저장
+    act_obj = context.active_object
+    if act_obj and act_obj.type == 'MESH':
+        scene.multi_toggle_active_mesh = act_obj
+        
     live_preview_enabled = getattr(scene, "multi_toggle_live_preview", True)
     globals_list = scene.multi_toggle_globals
     

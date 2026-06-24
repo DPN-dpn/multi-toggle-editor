@@ -18,7 +18,7 @@ def is_syntax_valid(rules, globals_list):
         return False
 
 def backup_rules(rules):
-    return [{'type': c.type, 'toggle_enum': c.toggle_enum, 'compare_op': c.compare_op, 
+    return [{'type': c.type, 'saved_toggle_index': c.saved_toggle_index, 'compare_op': c.compare_op, 
              'target_state': c.target_state, 'logical_op': c.logical_op} for c in rules]
 
 def restore_rules(rules, backup):
@@ -26,7 +26,7 @@ def restore_rules(rules, backup):
     for b in backup:
         c = rules.add()
         c.type = b['type']
-        c.toggle_enum = b['toggle_enum']
+        c.saved_toggle_index = b['saved_toggle_index']
         c.compare_op = b['compare_op']
         c.target_state = b['target_state']
         c.logical_op = b['logical_op']
@@ -38,6 +38,9 @@ class MULTI_TOGGLE_OT_add_condition(Operator):
     
     def execute(self, context):
         obj = context.active_object
+        if not (obj and obj.type == 'MESH'):
+            obj = context.scene.multi_toggle_active_mesh
+            
         if obj:
             rules = obj.multi_toggle_rules.conditions
             bkp = backup_rules(rules)
@@ -52,10 +55,7 @@ class MULTI_TOGGLE_OT_add_condition(Operator):
             
             scene = context.scene
             if getattr(scene, "multi_toggle_track_preview", False):
-                try:
-                    idx = int(new_cond.toggle_enum)
-                except:
-                    idx = 0
+                idx = new_cond.saved_toggle_index
                 globals_list = scene.multi_toggle_globals
                 if idx < len(globals_list):
                     global_toggle = globals_list[idx]
@@ -72,6 +72,8 @@ class MULTI_TOGGLE_OT_add_paren(Operator):
     @classmethod
     def poll(cls, context):
         obj = context.active_object
+        if not (obj and obj.type == 'MESH'):
+            obj = getattr(context.scene, "multi_toggle_active_mesh", None)
         if not obj: return False
         for c in obj.multi_toggle_rules.conditions:
             if c.type == 'CONDITION': return True
@@ -79,6 +81,9 @@ class MULTI_TOGGLE_OT_add_paren(Operator):
 
     def execute(self, context):
         obj = context.active_object
+        if not (obj and obj.type == 'MESH'):
+            obj = context.scene.multi_toggle_active_mesh
+            
         if obj:
             rules = obj.multi_toggle_rules.conditions
             bkp = backup_rules(rules)
@@ -114,6 +119,9 @@ class MULTI_TOGGLE_OT_remove_condition(Operator):
     index: IntProperty()
     def execute(self, context):
         obj = context.active_object
+        if not (obj and obj.type == 'MESH'):
+            obj = context.scene.multi_toggle_active_mesh
+            
         if obj:
             rules = obj.multi_toggle_rules.conditions
             bkp = backup_rules(rules)
@@ -174,6 +182,9 @@ class MULTI_TOGGLE_OT_move_condition(Operator):
     direction: IntProperty()
     def execute(self, context):
         obj = context.active_object
+        if not (obj and obj.type == 'MESH'):
+            obj = context.scene.multi_toggle_active_mesh
+            
         if obj:
             rules = obj.multi_toggle_rules.conditions
             new_index = self.index + self.direction

@@ -8,6 +8,7 @@ class MULTI_TOGGLE_PT_main_panel(Panel):
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'UI'
     bl_category = '멀티 토글'
+    bl_order = 1
     
     def draw(self, context):
         layout = self.layout
@@ -33,7 +34,7 @@ class MULTI_TOGGLE_PT_main_panel(Panel):
         layout.separator()
         
         # 2. 글로벌 토글 매니저
-        layout.label(text="토글 스위치 설정:", icon='PREFERENCES')
+        layout.label(text="토글 키", icon='PREFERENCES')
         
         row = layout.row()
         row.operator("multi_toggle.add_global", text="토글 추가", icon='ADD')
@@ -42,37 +43,62 @@ class MULTI_TOGGLE_PT_main_panel(Panel):
         for i, item in enumerate(scene.multi_toggle_globals):
             box = layout.box()
             row = box.row()
+            
+            # 접기/펼치기 버튼
+            icon = 'TRIA_DOWN' if item.is_expanded else 'TRIA_RIGHT'
+            row.prop(item, "is_expanded", text="", icon=icon, emboss=False)
+            
             row.prop(item, "name", text="")
             
+            if not item.is_expanded:
+                row.prop(item, "max_states", text="상태 수")
+                
             remove_op = row.operator("multi_toggle.remove_global", text="", icon='TRASH')
             remove_op.index = i
             
-            row = box.row()
-            row.prop(item, "hotkey", text="다음")
-            cap_op = row.operator("multi_toggle.capture_key", text="", icon='RESTRICT_RENDER_OFF')
-            cap_op.index = i
-            cap_op.target_prop = "hotkey"
-            
-            row2 = box.row(align=True)
-            row2.prop(item, "use_ctrl", toggle=True)
-            row2.prop(item, "use_shift", toggle=True)
-            row2.prop(item, "use_alt", toggle=True)
-            
-            row = box.row()
-            row.prop(item, "back_key", text="이전")
-            cap_op_back = row.operator("multi_toggle.capture_key", text="", icon='RESTRICT_RENDER_OFF')
-            cap_op_back.index = i
-            cap_op_back.target_prop = "back_key"
-            
-            row3 = box.row(align=True)
-            row3.prop(item, "back_use_ctrl", toggle=True)
-            row3.prop(item, "back_use_shift", toggle=True)
-            row3.prop(item, "back_use_alt", toggle=True)
-            
-            row = box.row()
-            row.prop(item, "max_states", text="상태 수")
+            if item.is_expanded:
+                row = box.row()
+                row.prop(item, "hotkey", text="다음")
+                cap_op = row.operator("multi_toggle.capture_key", text="", icon='RESTRICT_RENDER_OFF')
+                cap_op.index = i
+                cap_op.target_prop = "hotkey"
+                
+                row2 = box.row(align=True)
+                row2.prop(item, "use_ctrl", toggle=True)
+                row2.prop(item, "use_shift", toggle=True)
+                row2.prop(item, "use_alt", toggle=True)
+                
+                row = box.row()
+                row.prop(item, "back_key", text="이전")
+                cap_op_back = row.operator("multi_toggle.capture_key", text="", icon='RESTRICT_RENDER_OFF')
+                cap_op_back.index = i
+                cap_op_back.target_prop = "back_key"
+                
+                row3 = box.row(align=True)
+                row3.prop(item, "back_use_ctrl", toggle=True)
+                row3.prop(item, "back_use_shift", toggle=True)
+                row3.prop(item, "back_use_alt", toggle=True)
+                
+                row = box.row()
+                row.prop(item, "max_states", text="상태 수")
+
+class MULTI_TOGGLE_PT_io_panel(Panel):
+    """N-Panel에 표시될 입출력 전용 패널 (가장 위)"""
+    bl_label = "입출력 (IO)"
+    bl_idname = "MULTI_TOGGLE_PT_io_panel"
+    bl_space_type = 'VIEW_3D'
+    bl_region_type = 'UI'
+    bl_category = '멀티 토글'
+    bl_order = 0
+    
+    def draw(self, context):
+        layout = self.layout
+        row = layout.row(align=True)
+        row.operator("multi_toggle.import_ini", text="INI 불러오기", icon='IMPORT')
+        row.operator("multi_toggle.export_ini", text="INI 내보내기", icon='EXPORT')
 
 classes = (
+    MULTI_TOGGLE_PT_io_panel,
     MULTI_TOGGLE_PT_main_panel,
 )
 

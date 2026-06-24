@@ -1,7 +1,7 @@
-from . import adapters
+from . import mod_ini_processor
 
 modules = [
-    adapters,
+    mod_ini_processor,
 ]
 
 def register():

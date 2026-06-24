@@ -5,14 +5,14 @@ from bpy.types import PropertyGroup
 from .live_preview import update_visibility
 
 def update_current_state(self, context):
-    if self.current_state > self.max_states:
-        self.current_state = self.max_states
+    if self.current_state > self.max_states - 1:
+        self.current_state = self.max_states - 1
         return
     update_visibility(self, context)
 
 def update_max_states(self, context):
-    if self.current_state > self.max_states:
-        self.current_state = self.max_states
+    if self.current_state > self.max_states - 1:
+        self.current_state = self.max_states - 1
 
 def update_toggle_name(self, context):
     # 영문자, 숫자만 남기기
@@ -45,9 +45,9 @@ class MultiToggleGlobalItem(PropertyGroup):
     back_use_alt: bpy.props.BoolProperty(name="Alt", description="역방향 단축키에 Alt를 조합합니다", default=False)
     
     max_states: IntProperty(
-        name="최대 상태 수", 
-        description="최대 상태 값입니다 (예: 1이면 On/Off, 2이면 0/1/2)", 
-        default=1, 
+        name="상태 수", 
+        description="토글이 가질 수 있는 총 상태의 개수입니다 (예: 2이면 0과 1)", 
+        default=2, 
         min=1,
         update=update_max_states
     )
@@ -58,30 +58,30 @@ class MultiToggleGlobalItem(PropertyGroup):
         min=0,
         update=update_current_state
     )
+    is_expanded: bpy.props.BoolProperty(
+        name="펼치기/접기",
+        description="토글 세부 설정을 표시하거나 숨깁니다",
+        default=True
+    )
 
 def update_condition(self, context):
     scene = context.scene
     globals_list = scene.multi_toggle_globals
     
-    try:
-        idx = int(self.toggle_enum)
-    except (ValueError, AttributeError):
-        idx = 0
+    idx = self.saved_toggle_index
         
     if idx < len(globals_list):
         global_toggle = globals_list[idx]
         
-        # 요구 상태(target_state)가 토글의 최대 상태 수를 넘지 못하게 제한
-        if self.target_state > global_toggle.max_states:
-            self.target_state = global_toggle.max_states
-            return
+        # 요구 상태(target_state)가 토글의 최대 상태 인덱스를 넘지 못하게 제한
+        if self.target_state > global_toggle.max_states - 1:
+            self.target_state = global_toggle.max_states - 1
             
         if getattr(scene, "multi_toggle_track_preview", False):
             if global_toggle.current_state != self.target_state:
-                new_state = min(self.target_state, global_toggle.max_states)
+                new_state = min(self.target_state, global_toggle.max_states - 1)
                 if global_toggle.current_state != new_state:
                     global_toggle.current_state = new_state
-                    return
     
     update_visibility(self, context)
 
@@ -128,11 +128,21 @@ class MultiToggleVisibilityCondition(PropertyGroup):
         default='==',
         update=update_condition
     )
+    saved_toggle_index: IntProperty(default=0)
+    
+    def get_toggle_index(self):
+        return self.saved_toggle_index
+        
+    def set_toggle_index(self, value):
+        self.saved_toggle_index = value
+        update_condition(self, bpy.context)
+        
     toggle_enum: bpy.props.EnumProperty(
         name="대상 토글", 
         description="이 조건이 확인할 글로벌 토글입니다", 
         items=get_toggle_items,
-        update=update_condition
+        get=get_toggle_index,
+        set=set_toggle_index
     )
     target_state: IntProperty(
         name="목표 상태", 
@@ -162,18 +172,20 @@ def register():
     bpy.types.Scene.multi_toggle_track_preview = bpy.props.BoolProperty(
         name="미리보기 추적",
         description="가시성 규칙을 변경하면 실시간 미리보기도 해당 상태로 자동 전환됩니다",
-        default=True
+        default=False
     )
     for cls in classes:
         bpy.utils.register_class(cls)
     
     bpy.types.Scene.multi_toggle_globals = CollectionProperty(type=MultiToggleGlobalItem)
+    bpy.types.Scene.multi_toggle_active_mesh = PointerProperty(type=bpy.types.Object)
     bpy.types.Object.multi_toggle_rules = PointerProperty(type=MultiToggleMeshRules)
 
 def unregister():
     for cls in reversed(classes):
         bpy.utils.unregister_class(cls)
     del bpy.types.Scene.multi_toggle_globals
+    del bpy.types.Scene.multi_toggle_active_mesh
     del bpy.types.Object.multi_toggle_rules
     if hasattr(bpy.types.Scene, "multi_toggle_live_preview"):
         del bpy.types.Scene.multi_toggle_live_preview

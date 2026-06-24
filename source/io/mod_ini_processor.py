@@ -80,7 +80,7 @@ def process_export_mod_ini(filepath, globals_list, scene_objects):
             new_lines.append(f"type = cycle\n")
             
             # 0, 1, 2 등의 상태 리스트 생성
-            states = ", ".join([str(s) for s in range(global_toggle.max_states + 1)])
+            states = ", ".join([str(s) for s in range(global_toggle.max_states)])
             new_lines.append(f"${global_toggle.name} = {states}\n")
 
     with open(filepath, 'w', encoding='utf-8') as f:
@@ -147,7 +147,7 @@ def process_import_mod_ini(filepath, context):
             
             states_str = var_match.group(1).strip()
             states = [s.strip() for s in states_str.split(',')]
-            max_states = len(states) - 1 if len(states) > 0 else 1
+            max_states = len(states) if len(states) > 0 else 1
             
             item = globals_list.add()
             item.name = block_name
@@ -236,10 +236,61 @@ def process_import_mod_ini(filepath, context):
                             new_cond.logical_op = c['logical_op']
                         
                         if c['type'] == 'CONDITION':
-                            new_cond.toggle_enum = str(c["idx"])
+                            new_cond.saved_toggle_index = c["idx"]
                             new_cond.compare_op = c["cmp"]
                             new_cond.target_state = c["state"]
                     restored_meshes += 1
                     break
                     
     print(f"[{restored_meshes}] 개의 메쉬에서 가시성 규칙을 복원했습니다.")
+
+from bpy.props import StringProperty
+from bpy.types import Operator
+from bpy_extras.io_utils import ImportHelper, ExportHelper
+
+class MULTI_TOGGLE_OT_import_ini(Operator, ImportHelper):
+    """INI 파일에서 토글 설정을 불러옵니다"""
+    bl_idname = "multi_toggle.import_ini"
+    bl_label = "INI 토글 세팅 불러오기"
+    
+    filename_ext = ".ini"
+    filter_glob: StringProperty(
+        default="*.ini",
+        options={'HIDDEN'},
+        maxlen=255,
+    )
+    
+    def execute(self, context):
+        process_import_mod_ini(self.filepath, context)
+        self.report({'INFO'}, f"성공적으로 불러왔습니다: {os.path.basename(self.filepath)}")
+        return {'FINISHED'}
+
+class MULTI_TOGGLE_OT_export_ini(Operator, ExportHelper):
+    """INI 파일을 읽어와 토글 설정을 추가하여 덮어씁니다"""
+    bl_idname = "multi_toggle.export_ini"
+    bl_label = "INI 덮어쓰기 (내보내기)"
+    
+    filename_ext = ".ini"
+    filter_glob: StringProperty(
+        default="*.ini",
+        options={'HIDDEN'},
+        maxlen=255,
+    )
+    
+    def execute(self, context):
+        process_export_mod_ini(self.filepath, context.scene.multi_toggle_globals, context.scene.objects)
+        self.report({'INFO'}, f"성공적으로 내보냈습니다: {os.path.basename(self.filepath)}")
+        return {'FINISHED'}
+
+classes = (
+    MULTI_TOGGLE_OT_import_ini,
+    MULTI_TOGGLE_OT_export_ini,
+)
+
+def register():
+    for cls in classes:
+        bpy.utils.register_class(cls)
+
+def unregister():
+    for cls in reversed(classes):
+        bpy.utils.unregister_class(cls)

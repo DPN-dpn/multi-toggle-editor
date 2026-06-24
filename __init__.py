@@ -2,7 +2,7 @@ bl_info = {
     "name": "3DMigoto 멀티 토글 매니저",
     "author": "Antigravity",
     "version": (1, 0),
-    "blender": (2, 80, 0),
+    "blender": (3, 6, 23),
     "location": "View3D > N-Panel > 멀티 토글",
     "description": "3DMigoto 모드용 멀티 토글과 메쉬 가시성을 쉽게 관리합니다.",
     "warning": "",
@@ -25,7 +25,6 @@ if "bpy" in locals():
     importlib.reload(mr_panel)
     
     importlib.reload(io)
-    importlib.reload(io_adapters)
     importlib.reload(mod_ini_processor)
     
     importlib.reload(updator)
@@ -49,7 +48,6 @@ from .source.mesh_rules import operators as mr_operators
 from .source.mesh_rules import panel as mr_panel
 
 from .source import io
-from .source.io import adapters as io_adapters
 from .source.io import mod_ini_processor
 
 from .source import updator
@@ -63,7 +61,7 @@ modules = [
     gt_panel,
     mr_operators,
     mr_panel,
-    io_adapters,
+    mod_ini_processor,
     up_operators,
     up_panel,
 ]
