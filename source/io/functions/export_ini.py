@@ -2,13 +2,28 @@ import os
 import re
 from ...core.live_preview import compile_rules
 
-def clean_existing_rules(content):
+def clean_existing_rules(content, globals_list):
     # 1. Clean explicit markers (from the previous version)
     pattern = r'; --- MT: [a-zA-Z0-9_.-]+ ---\nif.*?\n(.*?)endif\n; -------------------------\n?'
     def repl(m):
         inner = m.group(1)
         return re.sub(r'^    ', '', inner, flags=re.MULTILINE)
     content = re.sub(pattern, repl, content, flags=re.DOTALL | re.IGNORECASE)
+    
+    # Clean new constants block
+    content = re.sub(r'; --- MT: Constants ---\n.*?; --- MT: Constants End ---\n?', '', content, flags=re.DOTALL | re.IGNORECASE)
+    
+    # Clean marker-less injected variables
+    content = re.sub(r'^\s*global\s+\$active\s*\n', '', content, flags=re.MULTILINE | re.IGNORECASE)
+    content = re.sub(r'^\s*post\s+\$active\s*=\s*0\s*\n', '', content, flags=re.MULTILINE | re.IGNORECASE)
+    
+    for gt in globals_list:
+        content = re.sub(r'\n\[Key' + re.escape(gt.name) + r'\].*?(?=\n\[|$)', '', content, flags=re.DOTALL | re.IGNORECASE)
+        content = re.sub(r'^\s*global\s+persist\s+\$' + re.escape(gt.name) + r'\s*=\s*0\s*\n', '', content, flags=re.MULTILINE | re.IGNORECASE)
+        
+    # Clean up empty [Constants] or [Present] blocks
+    content = re.sub(r'\[Constants\]\s*\n+(?=\n?\[|$)', '', content, flags=re.IGNORECASE)
+    content = re.sub(r'\[Present\]\s*\n+(?=\n?\[|$)', '', content, flags=re.IGNORECASE)
     
     # 2. Clean implicit wrappers (if...endif around drawindexed)
     lines = content.splitlines(keepends=True)
@@ -66,23 +81,90 @@ def process_export_mod_ini(filepath, globals_list, scene_objects):
         
     # 기존 자동 생성된 규칙 및 키 블록 초기화 (중복 방지)
     content = re.sub(r'; --- Multi-Toggle Auto-Generated Rules ---.*?;\s*-{10,}\n?', '', content, flags=re.DOTALL | re.IGNORECASE)
-    content = clean_existing_rules(content)
+    content = clean_existing_rules(content, globals_list)
     content = re.sub(r'; =========================================\n;\s*Multi-Toggle Auto-Generated Keys.*?$', '', content, flags=re.DOTALL | re.IGNORECASE)
     
     lines = content.splitlines(keepends=True)
     new_lines = []
     
+    # 미리 키 블록 생성
+    keys_block = []
+    if len(globals_list) > 0:
+        keys_block.append("[Constants]\n")
+        keys_block.append("global $active\n")
+        for gt in globals_list:
+            keys_block.append(f"global persist ${gt.name} = 0\n")
+            
+        for gt in globals_list:
+            keys_block.append(f"\n[Key{gt.name}]\n")
+            keys_block.append(f"condition = $active == 1\n")
+            
+            key_mods = []
+            if gt.use_ctrl: key_mods.append("ctrl")
+            if gt.use_alt: key_mods.append("alt")
+            if gt.use_shift: key_mods.append("shift")
+            key_str = " ".join(key_mods) + f" {gt.hotkey}" if key_mods else f"no_modifiers {gt.hotkey}"
+            keys_block.append(f"key = {key_str}\n")
+            
+            if gt.back_key:
+                back_mods = []
+                if gt.back_use_ctrl: back_mods.append("ctrl")
+                if gt.back_use_alt: back_mods.append("alt")
+                if gt.back_use_shift: back_mods.append("shift")
+                back_str = " ".join(back_mods) + f" {gt.back_key}" if back_mods else f"no_modifiers {gt.back_key}"
+                keys_block.append(f"back = {back_str}\n")
+                
+            keys_block.append(f"type = cycle\n")
+            states = ", ".join([str(s) for s in range(gt.max_states)])
+            keys_block.append(f"${gt.name} = {states}\n")
+            
+        keys_block.append("\n[Present]\n")
+        keys_block.append("post $active = 0\n\n")
+    
     buffer_comments = []
     in_texture_override = False
+    injected_constants = False
+    target_blend_position_block = False
     
     for line in lines:
-        if line.strip().startswith('[TextureOverride'):
-            in_texture_override = True
+        is_new_block = line.strip().startswith('[')
+        
+        if is_new_block and target_blend_position_block:
+            new_lines.append("$active = 1\n")
+            target_blend_position_block = False
             
-        elif line.strip().startswith('['):
+        if line.strip().lower().startswith('; constants'):
+            new_lines.append(line)
+            if len(keys_block) > 0 and not injected_constants:
+                new_lines.extend(keys_block)
+                injected_constants = True
+            continue
+            
+        if line.strip().lower().startswith('; overrides') and not injected_constants:
+            if len(keys_block) > 0:
+                new_lines.extend(keys_block)
+                injected_constants = True
+                
+        if line.strip().startswith('[TextureOverride'):
+            if not injected_constants and len(keys_block) > 0:
+                new_lines.extend(keys_block)
+                injected_constants = True
+            in_texture_override = True
+            m = re.match(r'\[TextureOverride(.*?)\]', line.strip(), re.IGNORECASE)
+            if m:
+                name = m.group(1).strip()
+                if name.lower().endswith('blend') or name.lower().endswith('position'):
+                    target_blend_position_block = True
+            
+        elif is_new_block:
+            if not injected_constants and len(keys_block) > 0:
+                new_lines.extend(keys_block)
+                injected_constants = True
             in_texture_override = False
             
         if in_texture_override:
+            if line.strip().lower() == '$active = 1':
+                continue
             if line.strip().startswith(';') or not line.strip():
                 buffer_comments.append(line)
                 continue
@@ -125,40 +207,12 @@ def process_export_mod_ini(filepath, globals_list, scene_objects):
     # 남아있는 주석 버퍼가 있다면 모두 플러시
     for c in buffer_comments:
         new_lines.append(c)
-                    
-    # 글로벌 토글 [Key] 블록을 파일 끝에 추가
-    if len(globals_list) > 0:
-        new_lines.append("\n; =========================================\n")
-        new_lines.append("; Multi-Toggle Auto-Generated Keys\n")
-        new_lines.append("; =========================================\n")
-        for i, global_toggle in enumerate(globals_list):
-            new_lines.append(f"\n[Key{global_toggle.name}]\n")
-            new_lines.append(f"condition = $active == 1\n")
-            
-            # 정방향 키 생성
-            key_mods = []
-            if global_toggle.use_ctrl: key_mods.append("ctrl")
-            if global_toggle.use_alt: key_mods.append("alt")
-            if global_toggle.use_shift: key_mods.append("shift")
-            
-            key_str = " ".join(key_mods) + f" {global_toggle.hotkey}" if key_mods else f"no_modifiers {global_toggle.hotkey}"
-            new_lines.append(f"key = {key_str}\n")
-            
-            # 역방향 키 생성
-            if global_toggle.back_key:
-                back_mods = []
-                if global_toggle.back_use_ctrl: back_mods.append("ctrl")
-                if global_toggle.back_use_alt: back_mods.append("alt")
-                if global_toggle.back_use_shift: back_mods.append("shift")
-                
-                back_str = " ".join(back_mods) + f" {global_toggle.back_key}" if back_mods else f"no_modifiers {global_toggle.back_key}"
-                new_lines.append(f"back = {back_str}\n")
-                
-            new_lines.append(f"type = cycle\n")
-            
-            # 0, 1, 2 등의 상태 리스트 생성
-            states = ", ".join([str(s) for s in range(global_toggle.max_states)])
-            new_lines.append(f"${global_toggle.name} = {states}\n")
+        
+    if target_blend_position_block:
+        new_lines.append("$active = 1\n")
+        
+    if len(keys_block) > 0 and not injected_constants:
+        new_lines.extend(keys_block)
 
     with open(filepath, 'w', encoding='utf-8') as f:
         f.writelines(new_lines)
