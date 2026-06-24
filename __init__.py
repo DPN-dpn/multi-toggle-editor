@@ -25,7 +25,7 @@ if "bpy" in locals():
     importlib.reload(mr_panel)
     
     importlib.reload(io)
-    importlib.reload(mod_ini_processor)
+    importlib.reload(io.operators)
     importlib.reload(io.panel)
     
     importlib.reload(updator)
@@ -49,7 +49,7 @@ from .source.mesh_rules import operators as mr_operators
 from .source.mesh_rules import panel as mr_panel
 
 from .source import io
-from .source.io import mod_ini_processor
+from .source.io import operators as io_operators
 from .source.io import panel as io_panel
 
 from .source import updator
@@ -63,7 +63,7 @@ modules = [
     gt_panel,
     mr_operators,
     mr_panel,
-    mod_ini_processor,
+    io_operators,
     up_operators,
     up_panel,
 ]

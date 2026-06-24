@@ -174,6 +174,11 @@ def register():
         description="토글 조건을 변경하면 실시간 미리보기도 해당 상태로 자동 전환됩니다",
         default=False
     )
+    bpy.types.Scene.multi_toggle_show_globals = bpy.props.BoolProperty(
+        name="토글 키 목록 표시",
+        description="토글 키 목록을 펼치거나 접습니다",
+        default=True
+    )
     for cls in classes:
         bpy.utils.register_class(cls)
     
