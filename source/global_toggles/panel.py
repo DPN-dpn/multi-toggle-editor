@@ -18,9 +18,8 @@ class MULTI_TOGGLE_PT_main_panel(Panel):
         box = layout.box()
         box.label(text="실시간 미리보기 조작", icon='RESTRICT_VIEW_OFF')
         
-        row = box.row()
-        row.prop(scene, "multi_toggle_live_preview", toggle=True, icon='RESTRICT_VIEW_OFF' if scene.multi_toggle_live_preview else 'RESTRICT_VIEW_ON')
-        row.prop(scene, "multi_toggle_track_preview", toggle=True, icon='TRACKING')
+        box.prop(scene, "multi_toggle_live_preview", toggle=True, icon='RESTRICT_VIEW_OFF' if scene.multi_toggle_live_preview else 'RESTRICT_VIEW_ON')
+        box.prop(scene, "multi_toggle_track_preview", toggle=True, icon='TRACKING')
         
         box.separator()
         
@@ -82,23 +81,7 @@ class MULTI_TOGGLE_PT_main_panel(Panel):
                 row = box.row()
                 row.prop(item, "max_states", text="상태 수")
 
-class MULTI_TOGGLE_PT_io_panel(Panel):
-    """N-Panel에 표시될 입출력 전용 패널 (가장 위)"""
-    bl_label = "입출력 (IO)"
-    bl_idname = "MULTI_TOGGLE_PT_io_panel"
-    bl_space_type = 'VIEW_3D'
-    bl_region_type = 'UI'
-    bl_category = '멀티 토글'
-    bl_order = 0
-    
-    def draw(self, context):
-        layout = self.layout
-        row = layout.row(align=True)
-        row.operator("multi_toggle.import_ini", text="INI 불러오기", icon='IMPORT')
-        row.operator("multi_toggle.export_ini", text="INI 내보내기", icon='EXPORT')
-
 classes = (
-    MULTI_TOGGLE_PT_io_panel,
     MULTI_TOGGLE_PT_main_panel,
 )
 

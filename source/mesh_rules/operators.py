@@ -37,7 +37,7 @@ class MULTI_TOGGLE_OT_add_condition(Operator):
     bl_label = "조건 추가"
     
     def execute(self, context):
-        obj = context.active_object
+        obj = context.view_layer.objects.active
         if not (obj and obj.type == 'MESH'):
             obj = context.scene.multi_toggle_active_mesh
             
@@ -71,7 +71,7 @@ class MULTI_TOGGLE_OT_add_paren(Operator):
     
     @classmethod
     def poll(cls, context):
-        obj = context.active_object
+        obj = context.view_layer.objects.active
         if not (obj and obj.type == 'MESH'):
             obj = getattr(context.scene, "multi_toggle_active_mesh", None)
         if not obj: return False
@@ -80,7 +80,7 @@ class MULTI_TOGGLE_OT_add_paren(Operator):
         return False
 
     def execute(self, context):
-        obj = context.active_object
+        obj = context.view_layer.objects.active
         if not (obj and obj.type == 'MESH'):
             obj = context.scene.multi_toggle_active_mesh
             
@@ -118,7 +118,7 @@ class MULTI_TOGGLE_OT_remove_condition(Operator):
     bl_label = "조건 삭제"
     index: IntProperty()
     def execute(self, context):
-        obj = context.active_object
+        obj = context.view_layer.objects.active
         if not (obj and obj.type == 'MESH'):
             obj = context.scene.multi_toggle_active_mesh
             
@@ -181,7 +181,7 @@ class MULTI_TOGGLE_OT_move_condition(Operator):
     index: IntProperty()
     direction: IntProperty()
     def execute(self, context):
-        obj = context.active_object
+        obj = context.view_layer.objects.active
         if not (obj and obj.type == 'MESH'):
             obj = context.scene.multi_toggle_active_mesh
             

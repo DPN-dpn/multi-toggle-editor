@@ -165,13 +165,13 @@ classes = (
 def register():
     bpy.types.Scene.multi_toggle_live_preview = bpy.props.BoolProperty(
         name="미리보기 렌더링",
-        description="가시성 규칙에 따라 메쉬를 실시간으로 숨깁니다. (끄면 편집을 위해 항상 표시)",
+        description="토글 조건에 따라 메쉬를 실시간으로 숨깁니다. (끄면 항상 표시)",
         default=True,
         update=lambda self, context: update_visibility(None, context)
     )
     bpy.types.Scene.multi_toggle_track_preview = bpy.props.BoolProperty(
         name="미리보기 추적",
-        description="가시성 규칙을 변경하면 실시간 미리보기도 해당 상태로 자동 전환됩니다",
+        description="토글 조건을 변경하면 실시간 미리보기도 해당 상태로 자동 전환됩니다",
         default=False
     )
     for cls in classes:

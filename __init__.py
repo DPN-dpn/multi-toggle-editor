@@ -26,6 +26,7 @@ if "bpy" in locals():
     
     importlib.reload(io)
     importlib.reload(mod_ini_processor)
+    importlib.reload(io.panel)
     
     importlib.reload(updator)
     importlib.reload(up_operators)
@@ -49,14 +50,15 @@ from .source.mesh_rules import panel as mr_panel
 
 from .source import io
 from .source.io import mod_ini_processor
+from .source.io import panel as io_panel
 
 from .source import updator
 from .source.updator import operators as up_operators
 from .source.updator import panel as up_panel
 
-# 등록 순서가 중요할 수 있으므로 리스트화
 modules = [
     properties,
+    io_panel,
     gt_operators,
     gt_panel,
     mr_operators,

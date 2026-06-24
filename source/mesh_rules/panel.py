@@ -21,7 +21,8 @@ class MULTI_TOGGLE_PT_mesh_rules_panel(Panel):
     
     @classmethod
     def poll(cls, context):
-        if context.active_object and context.active_object.type == 'MESH':
+        act_obj = context.view_layer.objects.active
+        if act_obj and act_obj.type == 'MESH':
             return True
         if getattr(context.scene, "multi_toggle_active_mesh", None):
             return True
@@ -32,7 +33,7 @@ class MULTI_TOGGLE_PT_mesh_rules_panel(Panel):
         scene = context.scene
         
         # 1. 대상 오브젝트 선정 (활성 오브젝트 우선, 없으면 캐시된 활성 오브젝트)
-        obj = context.active_object
+        obj = context.view_layer.objects.active
         if not (obj and obj.type == 'MESH'):
             obj = scene.multi_toggle_active_mesh
             
