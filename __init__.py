@@ -1,7 +1,7 @@
 bl_info = {
     "name": "3DMigoto 멀티 토글 매니저",
     "author": "Antigravity",
-    "version": (1, 0),
+    "version": (0, 1, 0),
     "blender": (3, 6, 23),
     "location": "View3D > N-Panel > 멀티 토글",
     "description": "3DMigoto 모드용 멀티 토글과 메쉬 가시성을 쉽게 관리합니다.",
