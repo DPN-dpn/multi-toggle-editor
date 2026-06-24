@@ -1,7 +1,7 @@
-from . import properties
+from . import adapters
 
 modules = [
-    properties,
+    adapters,
 ]
 
 def register():

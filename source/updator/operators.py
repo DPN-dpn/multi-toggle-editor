@@ -20,8 +20,8 @@ def _redraw_ui_regions(context):
 
 
 # 업데이트 체크
-class OT_CheckUpdate(Operator):
-    bl_idname = "mte.check_update"
+class MULTI_TOGGLE_OT_check_update(Operator):
+    bl_idname = "multi_toggle.check_update"
     bl_label = "업데이트 체크"
     bl_description = "최신 버전이 있는지 확인합니다"
 
@@ -31,23 +31,23 @@ class OT_CheckUpdate(Operator):
             with urllib.request.urlopen(url, timeout=5) as response:
                 data = json.loads(response.read().decode())
                 latest_version = data.get("tag_name", "").lstrip("v")
-                context.scene["mte.latest_version"] = latest_version
+                context.scene["multi_toggle_latest_version"] = latest_version
                 # 현재 버전 가져오기
                 from ... import bl_info
 
                 current_version = ".".join(map(str, bl_info["version"]))
-                context.scene["mte.current_version"] = current_version
-                context.scene["mte.show_restart"] = False
+                context.scene["multi_toggle_current_version"] = current_version
+                context.scene["multi_toggle_show_restart"] = False
                 if latest_version and latest_version != current_version:
-                    context.scene["mte.update_available"] = True
+                    context.scene["multi_toggle_update_available"] = True
                     self.report(
                         {"INFO"}, f"업데이트 가능: {current_version} → {latest_version}"
                     )
                 else:
-                    context.scene["mte.update_available"] = False
+                    context.scene["multi_toggle_update_available"] = False
                     self.report({"INFO"}, "최신 버전입니다.")
         except Exception as e:
-            context.scene["mte.update_available"] = False
+            context.scene["multi_toggle_update_available"] = False
             self.report({"ERROR"}, f"업데이트 확인 실패: {e}")
 
         _redraw_ui_regions(context)
@@ -55,8 +55,8 @@ class OT_CheckUpdate(Operator):
 
 
 # 업데이트 실행
-class OT_DoUpdate(Operator):
-    bl_idname = "mte.do_update"
+class MULTI_TOGGLE_OT_do_update(Operator):
+    bl_idname = "multi_toggle.do_update"
     bl_label = "업데이트"
     bl_description = "애드온을 최신 버전으로 업데이트합니다"
 
@@ -168,7 +168,7 @@ class OT_DoUpdate(Operator):
             shutil.rmtree(temp_dir, ignore_errors=True)
 
             self.report({"WARNING"}, "블렌더를 재시작해, 애드온을 새로고침해 주세요.")
-            context.scene["mte.show_restart"] = True
+            context.scene["multi_toggle_show_restart"] = True
             _redraw_ui_regions(context)
             return {"FINISHED"}
 
@@ -176,13 +176,13 @@ class OT_DoUpdate(Operator):
             if temp_dir:
                 shutil.rmtree(temp_dir, ignore_errors=True)
             self.report({"ERROR"}, f"업데이트 실패: {e}")
-            context.scene["mte.show_restart"] = False
+            context.scene["multi_toggle_show_restart"] = False
             return {"CANCELLED"}
 
 
 # GitHub 이동
-class OT_OpenGithub(Operator):
-    bl_idname = "mte.open_github"
+class MULTI_TOGGLE_OT_open_github(Operator):
+    bl_idname = "multi_toggle.open_github"
     bl_label = "GitHub"
     bl_description = "애드온의 GitHub 페이지를 엽니다"
 
@@ -195,9 +195,9 @@ class OT_OpenGithub(Operator):
 
 
 classes = (
-    OT_CheckUpdate,
-    OT_DoUpdate,
-    OT_OpenGithub,
+    MULTI_TOGGLE_OT_check_update,
+    MULTI_TOGGLE_OT_do_update,
+    MULTI_TOGGLE_OT_open_github,
 )
 
 
