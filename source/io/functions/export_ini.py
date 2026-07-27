@@ -108,6 +108,7 @@ def process_export_mod_ini(filepath, globals_list, scene_objects):
             elif gt.use_shift == 'NEG': key_mods.append("no_shift")
             key_str = " ".join(key_mods) + f" {gt.hotkey}" if key_mods else f"no_modifiers {gt.hotkey}"
             keys_block.append(f"key = {key_str}\n")
+            print(f"[Export] 글로벌 토글 '{gt.name}' 정방향 키 설정됨: {key_str}")
             
             if gt.back_key:
                 back_mods = []
@@ -119,6 +120,7 @@ def process_export_mod_ini(filepath, globals_list, scene_objects):
                 elif gt.back_use_shift == 'NEG': back_mods.append("no_shift")
                 back_str = " ".join(back_mods) + f" {gt.back_key}" if back_mods else f"no_modifiers {gt.back_key}"
                 keys_block.append(f"back = {back_str}\n")
+                print(f"[Export] 글로벌 토글 '{gt.name}' 역방향 키 설정됨: {back_str}")
                 
             keys_block.append(f"type = cycle\n")
             states = ", ".join([str(s) for s in range(gt.max_states)])
@@ -178,17 +180,26 @@ def process_export_mod_ini(filepath, globals_list, scene_objects):
             if line.strip().lower().startswith('drawindexed'):
                 mesh_name = None
                 for c in reversed(buffer_comments):
-                    m = re.match(r'^\s*;\s*([a-zA-Z0-9_.-]+)', c)
+                    # XXMITools가 주석에 추가하는 (vertex_count) 부분을 무시하고 순수 메쉬 이름만 추출합니다.
+                    m = re.match(r'^\s*;\s*(.*?)(?:\s*\(\d+\))?\s*$', c)
                     if m:
-                        mesh_name = m.group(1)
+                        mesh_name = m.group(1).strip()
                         break
                         
                 expr = None
                 if mesh_name:
                     obj = next((o for o in scene_objects if o.type == 'MESH' and o.name == mesh_name), None)
-                    if obj and hasattr(obj, 'multi_toggle_rules') and len(obj.multi_toggle_rules.conditions) > 0:
-                        expr = compile_rules(obj.multi_toggle_rules, globals_list)
-                        
+                    if obj:
+                        if hasattr(obj, 'multi_toggle_rules') and len(obj.multi_toggle_rules.conditions) > 0:
+                            expr = compile_rules(obj.multi_toggle_rules, globals_list)
+                            print(f"[Export] 파츠 '{mesh_name}'에 조건식을 추가합니다: {expr}")
+                        else:
+                            print(f"[Export] 파츠 '{mesh_name}' (오브젝트 찾음): 지정된 조건식이 없습니다.")
+                    else:
+                        print(f"[Export] 파츠 '{mesh_name}' (오브젝트 못찾음): 블렌더 씬에 일치하는 메쉬 오브젝트가 없습니다.")
+                else:
+                    print(f"[Export] drawindexed를 찾았으나 주석에서 파츠 이름을 추출할 수 없습니다.")
+                    
                 if expr:
                     new_lines.append(f"if {expr}\n")
                     for c in buffer_comments:

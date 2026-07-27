@@ -159,9 +159,9 @@ def process_import_mod_ini(filepath, context):
             
             part_mesh_name = None
             for line in reversed(inner_block.splitlines()):
-                m = re.match(r'^\s*;\s*([a-zA-Z0-9_.-]+)', line)
+                m = re.match(r'^\s*;\s*(.*?)(?:\s*\(\d+\))?\s*$', line)
                 if m:
-                    part_mesh_name = m.group(1)
+                    part_mesh_name = m.group(1).strip()
                     break
                     
             if part_mesh_name:
