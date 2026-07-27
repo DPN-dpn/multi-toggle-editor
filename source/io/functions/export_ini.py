@@ -26,47 +26,54 @@ def clean_existing_rules(content, globals_list):
     content = re.sub(r'\[Present\]\s*\n+(?=\n?\[|$)', '', content, flags=re.IGNORECASE)
     
     # 2. Clean implicit wrappers (if...endif around drawindexed)
-    lines = content.splitlines(keepends=True)
-    new_lines = []
-    i = 0
-    while i < len(lines):
-        line = lines[i]
-        if line.strip().lower().startswith('if '):
-            j = i + 1
-            inner_lines = []
-            has_drawindexed = False
-            has_other = False
-            found_endif = False
-            while j < len(lines):
-                inner_line = lines[j]
-                stripped = inner_line.strip().lower()
-                if stripped == 'endif':
-                    found_endif = True
-                    break
-                elif stripped.startswith('if '):
-                    has_other = True
-                    break
-                elif stripped.startswith('drawindexed'):
-                    has_drawindexed = True
-                    inner_lines.append(inner_line)
-                elif stripped.startswith(';') or not stripped:
-                    inner_lines.append(inner_line)
-                else:
-                    has_other = True
-                    break
-                j += 1
-                
-            if found_endif and has_drawindexed and not has_other:
-                # This is a valid wrapper
-                for il in inner_lines:
-                    new_lines.append(re.sub(r'^    ', '', il))
-                i = j + 1
-                continue
-                
-        new_lines.append(line)
-        i += 1
-        
-    return "".join(new_lines)
+    while True:
+        lines = content.splitlines(keepends=True)
+        new_lines = []
+        i = 0
+        changed = False
+        while i < len(lines):
+            line = lines[i]
+            if line.strip().lower().startswith('if '):
+                j = i + 1
+                inner_lines = []
+                has_drawindexed = False
+                has_other = False
+                found_endif = False
+                while j < len(lines):
+                    inner_line = lines[j]
+                    stripped = inner_line.strip().lower()
+                    if stripped == 'endif':
+                        found_endif = True
+                        break
+                    elif stripped.startswith('if ') or stripped.startswith('elif ') or stripped == 'else':
+                        has_other = True
+                        break
+                    elif stripped.startswith('drawindexed'):
+                        has_drawindexed = True
+                        inner_lines.append(inner_line)
+                    elif stripped.startswith(';') or not stripped:
+                        inner_lines.append(inner_line)
+                    else:
+                        has_other = True
+                        break
+                    j += 1
+                    
+                if found_endif and has_drawindexed and not has_other:
+                    # This is a valid wrapper
+                    for il in inner_lines:
+                        new_lines.append(re.sub(r'^    ', '', il))
+                    i = j + 1
+                    changed = True
+                    continue
+                    
+            new_lines.append(line)
+            i += 1
+            
+        content = "".join(new_lines)
+        if not changed:
+            break
+            
+    return content
 
 def process_export_mod_ini(filepath, globals_list, scene_objects):
     """
@@ -133,15 +140,26 @@ def process_export_mod_ini(filepath, globals_list, scene_objects):
     in_texture_override = False
     injected_constants = False
     target_blend_position_block = False
+    current_expr = None
+    
+    def close_current_expr():
+        nonlocal current_expr
+        if current_expr is not None:
+            new_lines.append("endif\n")
+            current_expr = None
     
     for line in lines:
         is_new_block = line.strip().startswith('[')
         
+        if is_new_block:
+            close_current_expr()
+            
         if is_new_block and target_blend_position_block:
             new_lines.append("$active = 1\n")
             target_blend_position_block = False
             
         if line.strip().lower().startswith('; constants'):
+            close_current_expr()
             new_lines.append(line)
             if len(keys_block) > 0 and not injected_constants:
                 new_lines.extend(keys_block)
@@ -149,6 +167,7 @@ def process_export_mod_ini(filepath, globals_list, scene_objects):
             continue
             
         if line.strip().lower().startswith('; overrides') and not injected_constants:
+            close_current_expr()
             if len(keys_block) > 0:
                 new_lines.extend(keys_block)
                 injected_constants = True
@@ -180,7 +199,6 @@ def process_export_mod_ini(filepath, globals_list, scene_objects):
             if line.strip().lower().startswith('drawindexed'):
                 mesh_name = None
                 for c in reversed(buffer_comments):
-                    # XXMITools가 주석에 추가하는 (vertex_count) 부분을 무시하고 순수 메쉬 이름만 추출합니다.
                     m = re.match(r'^\s*;\s*(.*?)(?:\s*\(\d+\))?\s*$', c)
                     if m:
                         mesh_name = m.group(1).strip()
@@ -200,26 +218,31 @@ def process_export_mod_ini(filepath, globals_list, scene_objects):
                 else:
                     print(f"[Export] drawindexed를 찾았으나 주석에서 파츠 이름을 추출할 수 없습니다.")
                     
-                if expr:
-                    new_lines.append(f"if {expr}\n")
-                    for c in buffer_comments:
-                        new_lines.append("    " + c if c.strip() else c)
-                    new_lines.append(f"    {line}")
-                    new_lines.append(f"endif\n")
-                else:
-                    for c in buffer_comments:
-                        new_lines.append(c)
-                    new_lines.append(line)
+                if expr != current_expr:
+                    close_current_expr()
+                    if expr is not None:
+                        new_lines.append(f"if {expr}\n")
+                    current_expr = expr
                     
+                indent = "    " if current_expr is not None else ""
+                for c in buffer_comments:
+                    new_lines.append(indent + c if c.strip() else c)
+                new_lines.append(indent + line)
                 buffer_comments.clear()
                 continue
                 
+            close_current_expr()
+                
+        close_current_expr()
+        
         # Flush buffers if any
         for c in buffer_comments:
             new_lines.append(c)
         buffer_comments.clear()
         
         new_lines.append(line)
+        
+    close_current_expr()
         
     # 남아있는 주석 버퍼가 있다면 모두 플러시
     for c in buffer_comments:
