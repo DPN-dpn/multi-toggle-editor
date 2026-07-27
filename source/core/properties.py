@@ -35,14 +35,20 @@ class MultiToggleGlobalItem(PropertyGroup):
         update=update_toggle_name
     )
     hotkey: StringProperty(name="단축키", description="이 토글을 작동시킬 단축키입니다 (예: VK_UP)", default="VK_UP")
-    use_ctrl: bpy.props.BoolProperty(name="Ctrl", description="정방향 단축키에 Ctrl을 조합합니다", default=False)
-    use_shift: bpy.props.BoolProperty(name="Shift", description="정방향 단축키에 Shift를 조합합니다", default=False)
-    use_alt: bpy.props.BoolProperty(name="Alt", description="정방향 단축키에 Alt를 조합합니다", default=False)
+    MODIFIER_ITEMS = [
+        ('NONE', "없음", "조합키 조건을 지정하지 않습니다"),
+        ('POS', "긍정", "해당 조합키를 포함해야 합니다 (예: ctrl)"),
+        ('NEG', "부정", "해당 조합키를 포함하지 않아야 합니다 (예: no_ctrl)")
+    ]
+    
+    use_ctrl: bpy.props.EnumProperty(name="Ctrl", description="정방향 단축키에 Ctrl을 조합합니다", items=MODIFIER_ITEMS, default='NONE')
+    use_shift: bpy.props.EnumProperty(name="Shift", description="정방향 단축키에 Shift를 조합합니다", items=MODIFIER_ITEMS, default='NONE')
+    use_alt: bpy.props.EnumProperty(name="Alt", description="정방향 단축키에 Alt를 조합합니다", items=MODIFIER_ITEMS, default='NONE')
     
     back_key: StringProperty(name="역방향 키", description="상태를 역순환시킬 단축키입니다 (빈 칸이면 사용 안 함)", default="")
-    back_use_ctrl: bpy.props.BoolProperty(name="Ctrl", description="역방향 단축키에 Ctrl을 조합합니다", default=False)
-    back_use_shift: bpy.props.BoolProperty(name="Shift", description="역방향 단축키에 Shift를 조합합니다", default=False)
-    back_use_alt: bpy.props.BoolProperty(name="Alt", description="역방향 단축키에 Alt를 조합합니다", default=False)
+    back_use_ctrl: bpy.props.EnumProperty(name="Ctrl", description="역방향 단축키에 Ctrl을 조합합니다", items=MODIFIER_ITEMS, default='NONE')
+    back_use_shift: bpy.props.EnumProperty(name="Shift", description="역방향 단축키에 Shift를 조합합니다", items=MODIFIER_ITEMS, default='NONE')
+    back_use_alt: bpy.props.EnumProperty(name="Alt", description="역방향 단축키에 Alt를 조합합니다", items=MODIFIER_ITEMS, default='NONE')
     
     max_states: IntProperty(
         name="상태 수", 

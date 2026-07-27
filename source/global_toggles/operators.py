@@ -141,11 +141,31 @@ class MULTI_TOGGLE_OT_capture_key(Operator):
             
         return {'RUNNING_MODAL'}
 
+class MULTI_TOGGLE_OT_cycle_modifier(Operator):
+    """조합키 조건을 설정합니다 (없음 -> 긍정 -> 부정)"""
+    bl_idname = "multi_toggle.cycle_modifier"
+    bl_label = "조합키 설정"
+    
+    index: IntProperty()
+    prop_name: StringProperty()
+    
+    def execute(self, context):
+        item = context.scene.multi_toggle_globals[self.index]
+        current = getattr(item, self.prop_name)
+        if current == 'NONE':
+            setattr(item, self.prop_name, 'POS')
+        elif current == 'POS':
+            setattr(item, self.prop_name, 'NEG')
+        else:
+            setattr(item, self.prop_name, 'NONE')
+        return {'FINISHED'}
+
 classes = (
     MULTI_TOGGLE_OT_add_global,
     MULTI_TOGGLE_OT_remove_global,
     MULTI_TOGGLE_OT_clear_globals,
     MULTI_TOGGLE_OT_capture_key,
+    MULTI_TOGGLE_OT_cycle_modifier,
 )
 
 def register():

@@ -67,9 +67,21 @@ class MULTI_TOGGLE_PT_main_panel(Panel):
                     cap_op.target_prop = "hotkey"
                     
                     row2 = box.row(align=True)
-                    row2.prop(item, "use_ctrl", toggle=True)
-                    row2.prop(item, "use_shift", toggle=True)
-                    row2.prop(item, "use_alt", toggle=True)
+                    
+                    def draw_mod(layout, index, prop_name, display_name):
+                        val = getattr(item, prop_name)
+                        if val == 'NONE':
+                            op = layout.operator("multi_toggle.cycle_modifier", text=display_name, depress=False)
+                        elif val == 'POS':
+                            op = layout.operator("multi_toggle.cycle_modifier", text=f"+ {display_name}", depress=True)
+                        else:
+                            op = layout.operator("multi_toggle.cycle_modifier", text=f"- {display_name}", depress=True)
+                        op.index = index
+                        op.prop_name = prop_name
+                        
+                    draw_mod(row2, i, "use_ctrl", "Ctrl")
+                    draw_mod(row2, i, "use_shift", "Shift")
+                    draw_mod(row2, i, "use_alt", "Alt")
                     
                     row = box.row()
                     row.prop(item, "back_key", text="이전")
@@ -78,9 +90,9 @@ class MULTI_TOGGLE_PT_main_panel(Panel):
                     cap_op_back.target_prop = "back_key"
                     
                     row3 = box.row(align=True)
-                    row3.prop(item, "back_use_ctrl", toggle=True)
-                    row3.prop(item, "back_use_shift", toggle=True)
-                    row3.prop(item, "back_use_alt", toggle=True)
+                    draw_mod(row3, i, "back_use_ctrl", "Ctrl")
+                    draw_mod(row3, i, "back_use_shift", "Shift")
+                    draw_mod(row3, i, "back_use_alt", "Alt")
                     
                     row = box.row()
                     row.prop(item, "max_states", text="상태 수")

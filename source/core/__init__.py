@@ -1,7 +1,9 @@
 from . import properties
+from . import live_preview
 
 modules = [
     properties,
+    live_preview
 ]
 
 def register():

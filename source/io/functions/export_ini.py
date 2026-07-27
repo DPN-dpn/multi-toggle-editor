@@ -100,17 +100,23 @@ def process_export_mod_ini(filepath, globals_list, scene_objects):
             keys_block.append(f"condition = $active == 1\n")
             
             key_mods = []
-            if gt.use_ctrl: key_mods.append("ctrl")
-            if gt.use_alt: key_mods.append("alt")
-            if gt.use_shift: key_mods.append("shift")
+            if gt.use_ctrl == 'POS': key_mods.append("ctrl")
+            elif gt.use_ctrl == 'NEG': key_mods.append("no_ctrl")
+            if gt.use_alt == 'POS': key_mods.append("alt")
+            elif gt.use_alt == 'NEG': key_mods.append("no_alt")
+            if gt.use_shift == 'POS': key_mods.append("shift")
+            elif gt.use_shift == 'NEG': key_mods.append("no_shift")
             key_str = " ".join(key_mods) + f" {gt.hotkey}" if key_mods else f"no_modifiers {gt.hotkey}"
             keys_block.append(f"key = {key_str}\n")
             
             if gt.back_key:
                 back_mods = []
-                if gt.back_use_ctrl: back_mods.append("ctrl")
-                if gt.back_use_alt: back_mods.append("alt")
-                if gt.back_use_shift: back_mods.append("shift")
+                if gt.back_use_ctrl == 'POS': back_mods.append("ctrl")
+                elif gt.back_use_ctrl == 'NEG': back_mods.append("no_ctrl")
+                if gt.back_use_alt == 'POS': back_mods.append("alt")
+                elif gt.back_use_alt == 'NEG': back_mods.append("no_alt")
+                if gt.back_use_shift == 'POS': back_mods.append("shift")
+                elif gt.back_use_shift == 'NEG': back_mods.append("no_shift")
                 back_str = " ".join(back_mods) + f" {gt.back_key}" if back_mods else f"no_modifiers {gt.back_key}"
                 keys_block.append(f"back = {back_str}\n")
                 

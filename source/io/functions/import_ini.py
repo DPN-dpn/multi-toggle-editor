@@ -61,23 +61,23 @@ def process_import_mod_ini(filepath, context):
             # Parse Forward Key
             key_parts = key_match.group(1).strip().split()
             hotkey = key_parts[-1] if key_parts else ""
-            use_ctrl = "ctrl" in key_parts
-            use_shift = "shift" in key_parts
-            use_alt = "alt" in key_parts
+            use_ctrl = 'POS' if "ctrl" in key_parts else 'NEG' if "no_ctrl" in key_parts else 'NONE'
+            use_shift = 'POS' if "shift" in key_parts else 'NEG' if "no_shift" in key_parts else 'NONE'
+            use_alt = 'POS' if "alt" in key_parts else 'NEG' if "no_alt" in key_parts else 'NONE'
             
             # Parse Backward Key
             back_key = ""
-            back_use_ctrl = False
-            back_use_shift = False
-            back_use_alt = False
+            back_use_ctrl = 'NONE'
+            back_use_shift = 'NONE'
+            back_use_alt = 'NONE'
             
             if back_match:
                 back_parts = back_match.group(1).strip().split()
                 if back_parts:
                     back_key = back_parts[-1]
-                    back_use_ctrl = "ctrl" in back_parts
-                    back_use_shift = "shift" in back_parts
-                    back_use_alt = "alt" in back_parts
+                    back_use_ctrl = 'POS' if "ctrl" in back_parts else 'NEG' if "no_ctrl" in back_parts else 'NONE'
+                    back_use_shift = 'POS' if "shift" in back_parts else 'NEG' if "no_shift" in back_parts else 'NONE'
+                    back_use_alt = 'POS' if "alt" in back_parts else 'NEG' if "no_alt" in back_parts else 'NONE'
             
             states_str = var_match.group(1).strip()
             states = [s.strip() for s in states_str.split(',')]
