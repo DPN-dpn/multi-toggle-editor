@@ -160,12 +160,34 @@ class MULTI_TOGGLE_OT_cycle_modifier(Operator):
             setattr(item, self.prop_name, 'NONE')
         return {'FINISHED'}
 
+class MULTI_TOGGLE_OT_expand_all_globals(Operator):
+    """모든 토글을 펼칩니다"""
+    bl_idname = "multi_toggle.expand_all_globals"
+    bl_label = "모두 펼치기"
+    
+    def execute(self, context):
+        for item in context.scene.multi_toggle_globals:
+            item.is_expanded = True
+        return {'FINISHED'}
+
+class MULTI_TOGGLE_OT_collapse_all_globals(Operator):
+    """모든 토글을 접습니다"""
+    bl_idname = "multi_toggle.collapse_all_globals"
+    bl_label = "모두 접기"
+    
+    def execute(self, context):
+        for item in context.scene.multi_toggle_globals:
+            item.is_expanded = False
+        return {'FINISHED'}
+
 classes = (
     MULTI_TOGGLE_OT_add_global,
     MULTI_TOGGLE_OT_remove_global,
     MULTI_TOGGLE_OT_clear_globals,
     MULTI_TOGGLE_OT_capture_key,
     MULTI_TOGGLE_OT_cycle_modifier,
+    MULTI_TOGGLE_OT_expand_all_globals,
+    MULTI_TOGGLE_OT_collapse_all_globals,
 )
 
 def register():

@@ -3,7 +3,7 @@ from bpy.types import Panel
 
 class MULTI_TOGGLE_PT_main_panel(Panel):
     """N-Panel에 표시될 메인 탭"""
-    bl_label = "글로벌 토글 매니저"
+    bl_label = "토글 매니저"
     bl_idname = "MULTI_TOGGLE_PT_main_panel"
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'UI'
@@ -42,6 +42,11 @@ class MULTI_TOGGLE_PT_main_panel(Panel):
             row = layout.row()
             row.operator("multi_toggle.add_global", text="토글 추가", icon='ADD')
             row.operator("multi_toggle.clear_globals", text="모두 지우기", icon='X')
+            
+            if len(scene.multi_toggle_globals) > 0:
+                row = layout.row()
+                row.operator("multi_toggle.expand_all_globals", text="모두 펼치기", icon='DOWNARROW_HLT')
+                row.operator("multi_toggle.collapse_all_globals", text="모두 접기", icon='RIGHTARROW')
     
             for i, item in enumerate(scene.multi_toggle_globals):
                 box = layout.box()
@@ -54,7 +59,7 @@ class MULTI_TOGGLE_PT_main_panel(Panel):
                 row.prop(item, "name", text="")
                 
                 if not item.is_expanded:
-                    row.prop(item, "max_states", text="상태 수")
+                    row.prop(item, "max_states")
                     
                 remove_op = row.operator("multi_toggle.remove_global", text="", icon='TRASH')
                 remove_op.index = i
@@ -95,7 +100,7 @@ class MULTI_TOGGLE_PT_main_panel(Panel):
                     draw_mod(row3, i, "back_use_alt", "Alt")
                     
                     row = box.row()
-                    row.prop(item, "max_states", text="상태 수")
+                    row.prop(item, "max_states")
 
 classes = (
     MULTI_TOGGLE_PT_main_panel,
